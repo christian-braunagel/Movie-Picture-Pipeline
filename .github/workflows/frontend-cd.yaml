@@ -91,9 +91,10 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
         run: |
           cd starter/frontend
-          docker build --build-arg=REACT_APP_MOVIE_API_URL=${{ secrets.REACT_APP_MOVIE_API_URL }} -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
+          docker build --build-arg=REACT_APP_MOVIE_API_URL=${{ vars.REACT_APP_MOVIE_API_URL }} -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
           docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
-          echo "IMAGE_URI=$REGISTRY/$REPOSITORY:$IMAGE_TAG" >> $GITHUB_ENV
+          echo ${{ vars.REACT_APP_MOVIE_API_URL }}
+          echo ${{ env.REACT_APP_MOVIE_API_URL }}
 
 
   # deploy image to EKS
@@ -118,38 +119,23 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      # - name: Install kubectl
-      #   run: |
-      #     curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-      #     chmod +x ./kubectl
-      #     sudo mv ./kubectl /usr/local/bin/kubectl
-
       # update cluster with config in .kube
       - name: Update kubeconfig
         run: |
-          aws eks update-kubeconfig --region us-east-1 --name cluster
+          aws eks update-kubeconfig --name cluster --region us-east-1
 
-      # # use kustomization.yaml
-      # - name: Deploy to EKS using Kustomize
-      #   run: |
-      #     cd starter/frontend/k8s
-      #     kubectl apply -k .
-
-      # set image with kustomize
-      - name: Kustomize set image
+      # set image
+      - name: Set image in Kubernetes deployment
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: frontend
+          IMAGE_TAG: ${{ github.sha }}
         run: |
           cd starter/frontend/k8s
           kustomize edit set image frontend=$REGISTRY/$REPOSITORY:$IMAGE_TAG
 
-      # # set image
-      # - name: Set image in Kubernetes deployment
-      #   run: |
-      #     cd starter/frontend/k8s
-      #     kubectl set image deployment/frontend frontend=${{ env.IMAGE_URI }} --record
-
-      - name: Deploy application to EKS
+      # use kustomization.yaml
+      - name: Deploy to EKS using Kustomize
         run: |
           cd starter/frontend/k8s
           kustomize build . | kubectl apply -f -
