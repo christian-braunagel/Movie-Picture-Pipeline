@@ -93,9 +93,6 @@ jobs:
           cd starter/frontend
           docker build --build-arg=REACT_APP_MOVIE_API_URL=${{ vars.REACT_APP_MOVIE_API_URL }} -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
           docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
-          echo ${{ vars.REACT_APP_MOVIE_API_URL }}
-          echo ${{ env.REACT_APP_MOVIE_API_URL }}
-
 
   # deploy image to EKS
   deploy:
