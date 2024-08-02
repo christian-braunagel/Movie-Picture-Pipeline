@@ -132,6 +132,7 @@ jobs:
           kustomize edit set image frontend=$REGISTRY/$REPOSITORY:$IMAGE_TAG
 
       # use kustomization.yaml
+      # DEployment fo the frontend is on http://a4b737639d79945de8a5b1073f4deab2-18985188.us-east-1.elb.amazonaws.com/
       - name: Deploy to EKS using Kustomize
         run: |
           cd starter/frontend/k8s
